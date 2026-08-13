@@ -9,9 +9,19 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@types/qrcode": "^1.5.6",
+    "browser-image-compression": "^2.0.2",
+    "jsbarcode": "^3.12.3",
+    "motion": "^13.1.0",
     "next": "16.3.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.2.108",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-dropzone": "^20.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
