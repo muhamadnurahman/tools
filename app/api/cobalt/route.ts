@@ -22,16 +22,34 @@ export async function POST(req: NextRequest) {
       headers["Authorization"] = `Api-Key ${COBALT_API_KEY}`;
     }
 
-    const cobaltRes = await fetch(`${COBALT_API}/`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      // Timeout 30 detik
-      signal: AbortSignal.timeout(30_000),
-    });
+    // Coba beberapa instance sebagai fallback
+    const instances = [
+      COBALT_API,
+      "https://cobalt.imput.net",
+      "https://co.wuk.sh",
+    ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
 
-    const data = await cobaltRes.json();
-    return NextResponse.json(data, { status: cobaltRes.status });
+    let lastError = "";
+    for (const instance of instances) {
+      try {
+        const cobaltRes = await fetch(`${instance}/`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(20_000),
+        });
+        const data = await cobaltRes.json();
+        return NextResponse.json(data, { status: cobaltRes.status });
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : String(e);
+        continue; // coba instance berikutnya
+      }
+    }
+
+    return NextResponse.json(
+      { status: "error", error: { code: "all_instances_failed", message: lastError } },
+      { status: 503 }
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Gagal menghubungi server";
     return NextResponse.json({ status: "error", error: { code: "proxy_error", message: msg } }, { status: 500 });
