@@ -63,21 +63,19 @@ self.addEventListener("message", async (event: MessageEvent) => {
     const maskTensor = output[0].mul(255).to("uint8");
     const mask = await RawImage.fromTensor(maskTensor).resize(image.width, image.height);
 
+    // Load gambar via fetch → blob → bitmap (menghindari masalah channel mismatch)
+    const response = await fetch(imageURL);
+    const imageBlob = await response.blob();
+    const bitmap = await createImageBitmap(imageBlob);
+
     // Render ke OffscreenCanvas
-    const canvas = new OffscreenCanvas(image.width, image.height);
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
     const ctx = canvas.getContext("2d")!;
-
-    // Gambar image asli
-    const imgData = new ImageData(
-      new Uint8ClampedArray(image.data as Uint8Array),
-      image.width,
-      image.height
-    );
-    const bitmap = await createImageBitmap(imgData);
     ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
 
-    // Terapkan mask sebagai alpha channel
-    const outputData = ctx.getImageData(0, 0, image.width, image.height);
+    // Ambil image asli sebagai RGBA
+    const outputData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = outputData.data;
     const maskData = mask.data as Uint8Array;
     for (let i = 0; i < maskData.length; i++) {
